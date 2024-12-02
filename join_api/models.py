@@ -10,14 +10,6 @@ class Contact(models.Model):
     
     def __str__(self):
         return self.name
-
-class User(models.Model):
-    name = models.CharField(max_length=100)
-    email = models.EmailField()
-    password = models.CharField(max_length=100)
-    confirm_password = models.CharField(max_length=100)
-    emblem = models.CharField(max_length=100, blank=True)
-    color = models.CharField(max_length=100, null=True, blank=True)
     
     def __str__(self):
         return self.name
@@ -42,3 +34,11 @@ class Subtask(models.Model):
     
     def __str__(self):
         return self.subtasktext & self.checked
+    
+class User(models.Model):
+    name = models.CharField(max_length=100)
+    email = models.EmailField()
+    password = models.CharField(max_length=100)
+    confirm_password = models.CharField(max_length=100)
+    emblem = models.CharField(max_length=100, blank=True)
+    color = models.CharField(max_length=100, null=True, blank=True)
