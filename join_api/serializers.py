@@ -2,7 +2,7 @@ from rest_framework import serializers
 from .models import Contact, User, Task, Subtask
 
 class ContactSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField()  # Explizit das 'id'-Feld deklarieren
+    id = serializers.IntegerField()
     class Meta:
         model = Contact
         fields = ('id', 'name', 'email', 'phone', 'emblem', 'color', 'checked')
@@ -33,7 +33,6 @@ class TaskSerializer(serializers.ModelSerializer):
         fields = ('cardId', 'title', 'description', 'date', 'priority', 'category', 'status', 'contacts', 'subtasks')
 
     def validate_contacts(self, value):
-        print("Validating Contacts:", value)  # Debugging
         for contact in value:
             if 'id' not in contact:
                 raise serializers.ValidationError(f"Kontakt ohne 'id': {contact}")
@@ -42,10 +41,10 @@ class TaskSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         subtasks_data = validated_data.pop('subtasks', validated_data.pop('subtask', []))
         contacts_data = validated_data.pop('contacts', [])
-    
+
         # Task erstellen
         task = Task.objects.create(**validated_data)
-    
+
         # Kontakte verarbeiten und mit Task verknüpfen
         for contact_data in contacts_data:
             contact = Contact.objects.get(id=contact_data['id'])
@@ -53,9 +52,9 @@ class TaskSerializer(serializers.ModelSerializer):
             contact.save()
             if contact.checked:
                 task.contacts.add(contact)
-    
+
         # Subtasks erstellen
         for subtask_data in subtasks_data:
             Subtask.objects.create(task=task, **subtask_data)
-    
+
         return task
