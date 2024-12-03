@@ -8,4 +8,5 @@ urlpatterns = [
     path('tasks/<int:pk>/', TaskDetail.as_view()),
     path('subtasks/', SubtaskList.as_view()),
     path('subtasks/<int:pk>/', SubtaskDetail.as_view()),
+    path('tasks/<int:task_id>/subtasks/<int:subtask_id>/', SubtaskDetail.as_view(), name='task-subtask-detail'),
 ]

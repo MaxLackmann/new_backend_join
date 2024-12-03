@@ -1,10 +1,8 @@
-from django.shortcuts import render
-from rest_framework import generics
+from django.shortcuts import get_object_or_404, render
+from rest_framework import generics, status
 from rest_framework.response import Response
 from .serializers import ContactSerializer, TaskSerializer, SubtaskSerializer #, UserSerializer
 from .models import Contact,Task, Subtask #,User
-
-
 
 class ContactList(generics.ListCreateAPIView):
     queryset = Contact.objects.all()
@@ -36,3 +34,17 @@ class SubtaskList(generics.ListCreateAPIView):
 class SubtaskDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Subtask.objects.all()
     serializer_class = SubtaskSerializer
+    
+    def patch(self, request, task_id, subtask_id, *args, **kwargs):
+        # 1. Hole den Task
+        task = get_object_or_404(Task, pk=task_id)
+
+        # 2. Hole den Subtask, der zu diesem Task gehört
+        subtask = get_object_or_404(Subtask, pk=subtask_id, task=task)
+
+        # 3. Aktualisiere die Daten
+        serializer = self.serializer_class(subtask, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()  # Speichern der aktualisierten Subtask-Daten
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
