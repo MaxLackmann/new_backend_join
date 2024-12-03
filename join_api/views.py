@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from rest_framework import generics
+from rest_framework.response import Response
 from .serializers import ContactSerializer, TaskSerializer, SubtaskSerializer #, UserSerializer
 from .models import Contact,Task, Subtask #,User
 
@@ -16,6 +17,13 @@ class ContactDetail(generics.RetrieveUpdateDestroyAPIView):
 class TaskList(generics.ListCreateAPIView):
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = TaskSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=201)
+        return Response(serializer.errors, status=400)
     
 class TaskDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Task.objects.all()

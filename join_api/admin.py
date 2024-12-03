@@ -3,7 +3,7 @@ from .models import Contact, User, Task, Subtask
 
 @admin.register(Contact)
 class ContactAdmin(admin.ModelAdmin):
-    list_display = ('name', 'email', 'phone', 'emblem', 'color', 'checked')
+    list_display = ('id', 'name', 'email', 'phone', 'emblem', 'color', 'checked')
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):

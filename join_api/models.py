@@ -11,15 +11,13 @@ class Contact(models.Model):
     def __str__(self):
         return self.name
     
-    def __str__(self):
-        return self.name
     
 class Task(models.Model):
     cardId = models.AutoField(primary_key=True)
     title = models.CharField(max_length=100)
     description = models.TextField()
     date = models.DateField()
-    priority = models.IntegerField()
+    priority = models.CharField(max_length=20, blank=True)
     category = models.CharField(max_length=100)
     status = models.CharField(max_length=20)
     contacts = models.ManyToManyField(Contact, blank=True)
@@ -30,11 +28,11 @@ class Task(models.Model):
 class Subtask(models.Model):
     subtasktext = models.CharField(max_length=100)
     checked = models.BooleanField(default=False)
-    task = models.ForeignKey(Task, on_delete=models.CASCADE)
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='subtasks')
     
     def __str__(self):
-        return self.subtasktext & self.checked
-    
+        return f"{self.subtasktext} (Checked: {self.checked})"
+
 class User(models.Model):
     name = models.CharField(max_length=100)
     email = models.EmailField()
