@@ -36,15 +36,12 @@ class SubtaskDetail(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = SubtaskSerializer
     
     def patch(self, request, task_id, subtask_id, *args, **kwargs):
-        # 1. Hole den Task
         task = get_object_or_404(Task, pk=task_id)
 
-        # 2. Hole den Subtask, der zu diesem Task gehört
         subtask = get_object_or_404(Subtask, pk=subtask_id, task=task)
 
-        # 3. Aktualisiere die Daten
         serializer = self.serializer_class(subtask, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()  # Speichern der aktualisierten Subtask-Daten
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
