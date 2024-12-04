@@ -45,10 +45,8 @@ class TaskSerializer(serializers.ModelSerializer):
         return task
     
     def update(self, instance, validated_data):
-        # Aktualisiere einfache Felder
         self._update_task_fields(instance, validated_data)
 
-        # Aktualisiere Kontakte und Subtasks
         contacts_data = validated_data.pop('contacts', [])
         subtasks_data = validated_data.pop('subtasks', [])
 
