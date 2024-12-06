@@ -24,9 +24,7 @@ class SubtaskSerializer(serializers.ModelSerializer):
         return value
         
 class TaskSerializer(serializers.ModelSerializer):
-    # contact_ids ist eine Liste der IDs der zugeordneten Kontakte
     contact_ids = serializers.PrimaryKeyRelatedField(many=True, queryset=Contact.objects.all(), source='contacts')
-    # contacts gibt die vollständigen Informationen der Kontakte zurück
     contacts = ContactSerializer(many=True, read_only=True)
 
     subtasks = SubtaskSerializer(many=True)
@@ -44,6 +42,9 @@ class TaskSerializer(serializers.ModelSerializer):
 
         # Fügt die Kontakte hinzu
         task.contacts.set(contacts_data)
+        for contact in contacts_data:
+            contact.checked = True
+            contact.save()
 
         # Fügt die Subtasks hinzu
         self._create_subtasks(task, subtasks_data)
@@ -59,9 +60,19 @@ class TaskSerializer(serializers.ModelSerializer):
         instance.category = validated_data.get('category', instance.category)
         instance.status = validated_data.get('status', instance.status)
 
-        # Kontakte aktualisieren
-        contacts_data = validated_data.pop('contacts', [])
-        instance.contacts.set(contacts_data)
+        existing_contacts = set(instance.contacts.all())
+        new_contacts_data = validated_data.pop('contacts', [])
+        
+        for contact in existing_contacts:
+            if contact not in new_contacts_data:
+                contact.checked = False
+                contact.save()
+
+        # Setze `checked` auf True für alle neuen verknüpften Kontakte
+        instance.contacts.set(new_contacts_data)
+        for contact in new_contacts_data:
+            contact.checked = True
+            contact.save()
 
         # Subtasks aktualisieren
         subtasks_data = validated_data.pop('subtasks', [])

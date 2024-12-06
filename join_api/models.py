@@ -2,7 +2,7 @@ from django.db import models
 
 class Contact(models.Model):
     name = models.CharField(max_length=100)
-    email = models.EmailField()
+    email = models.EmailField(unique=True)
     phone = models.TextField()
     emblem = models.CharField(max_length=100)
     color = models.CharField(max_length=100)
