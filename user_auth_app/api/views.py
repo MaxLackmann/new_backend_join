@@ -24,11 +24,14 @@ class RegisterView(APIView):
         data = {}
         if serializer.is_valid():
             saved_account = serializer.save()
+            print("Saved account:", saved_account)  # Debugging: Überprüft den Benutzer
+            print("Password (hashed):", saved_account.password)  # Debugging: Zeigt das Passwort (sollte ein Hash sein)
             token, created = Token.objects.get_or_create(user=saved_account)
+            print("Token generated:", token.key)  # Debugging: Überprüft den Token
             data = serializer.data
             data['token'] = token.key
-            
         else:
+            print("Registration errors:", serializer.errors)  # Debugging: Zeigt Fehler bei der Registrierung
             data = serializer.errors
         return Response(data)
 
@@ -36,17 +39,22 @@ class EmailLoginView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
+        print("Request received with data:", request.data)  # Debugging statement to inspect request data
         serializer = EmailAuthTokenSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.validated_data['user']
+            print("User authenticated:", user)  # Debugging authenticated user details
+
+            # Ensure the user is active before proceeding
+            if not user.is_active:
+                return Response({"error": "User account is inactive."}, status=status.HTTP_403_FORBIDDEN)
+
             Token.objects.filter(user=user).delete()
             token = Token.objects.create(user=user)
             data = {
                 'token': token.key,
-                'username': user.username,
                 'email': user.email,
-                'emblem': user.emblem,
-                'color': user.color,
             }
-            return Response(data)
+            return Response(data, status=status.HTTP_200_OK)
+        print("Validation errors:", serializer.errors)  # Debugging validation errors
         return Response(serializer.errors, status=400)

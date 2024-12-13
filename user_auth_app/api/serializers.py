@@ -1,8 +1,9 @@
 from rest_framework import serializers
-from ..models import CustomUser
+from user_auth_app.models import CustomUser
 from django.contrib.auth import authenticate
 
 class UserRegisterSerializer(serializers.ModelSerializer):
+    confirm_password = serializers.CharField(write_only=True)
     class Meta:
         model = CustomUser
         fields = ['id', 'username', 'email', 'password', 'confirm_password', 'emblem', 'color']
@@ -34,8 +35,11 @@ class EmailAuthTokenSerializer(serializers.Serializer):
         email = attrs.get('email')
         password = attrs.get('password')
 
+        print("Authenticating with:", email, password)  # Debugging
+
         if email and password:
             user = authenticate(username=email, password=password)
+            print("Authenticated user:", user)  # Debugging
             if not user:
                 raise serializers.ValidationError("Unable to log in with provided credentials.")
         else:

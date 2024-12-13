@@ -8,8 +8,22 @@ class ContactSerializer(serializers.ModelSerializer):
         model = Contact
         fields = ('id', 'name', 'email', 'phone', 'emblem', 'color')
 
+class CustomUserDetailSerializer(serializers.ModelSerializer):
+    contacts = serializers.SerializerMethodField()
+    tasks = serializers.SerializerMethodField()
 
-        
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'username', 'email', 'emblem', 'color', 'contacts', 'tasks']
+
+    def get_contacts(self, obj):
+        contacts = Contact.objects.filter(username=obj)
+        return ContactSerializer(contacts, many=True).data
+
+    def get_tasks(self, obj):
+        tasks = Task.objects.filter(username=obj)
+        return TaskSerializer(tasks, many=True).data
+
 class SubtaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subtask
@@ -28,7 +42,7 @@ class TaskSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Task
-        fields = ('cardId', 'title', 'description', 'date', 'priority', 'category', 'status', 'username_ids', 'username', 'subtasks')
+        fields = ('cardId', 'title', 'description', 'date', 'priority', 'category', 'status', 'username_ids', 'usernames', 'subtasks')
 
     def create(self, validated_data):
         subtasks_data = validated_data.pop('subtasks', [])
