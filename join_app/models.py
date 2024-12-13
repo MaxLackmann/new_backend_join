@@ -1,4 +1,5 @@
 from django.db import models
+from user_auth_app.models import CustomUser
 
 class Contact(models.Model):
     name = models.CharField(max_length=100)
@@ -6,7 +7,8 @@ class Contact(models.Model):
     phone = models.TextField()
     emblem = models.CharField(max_length=100)
     color = models.CharField(max_length=100)
-    checked = models.BooleanField(default=False)
+    username = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='contacts'
+                             , null=True, blank=True)
     
     def __str__(self):
         return self.name
@@ -20,8 +22,7 @@ class Task(models.Model):
     priority = models.CharField(max_length=20, blank=True)
     category = models.CharField(max_length=100)
     status = models.CharField(max_length=20)
-    contacts = models.ManyToManyField(Contact, blank=True)
-    
+    username = models.ManyToManyField(CustomUser, blank=True, related_name='tasks')    
     def __str__(self):
         return self.title
 
@@ -33,13 +34,19 @@ class Subtask(models.Model):
     def __str__(self):
         return f"{self.subtasktext} (Checked: {self.checked})"
 
-class User(models.Model):
-    name = models.CharField(max_length=100)
-    email = models.EmailField()
-    password = models.CharField(max_length=100)
-    confirm_password = models.CharField(max_length=100)
-    emblem = models.CharField(max_length=100, blank=True)
-    color = models.CharField(max_length=100, null=True, blank=True)
+class TaskUser(models.Model):
+    username = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    task = models.ForeignKey(Task, on_delete=models.CASCADE)
+    checked = models.BooleanField(default=False)
+
     
     def __str__(self):
-        return self.name
+        return f"{self.username} - {self.task}"
+    
+class UserContact(models.Model):
+    username = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    contact = models.ForeignKey(Contact, on_delete=models.CASCADE)
+    phone = models.CharField(max_length=20, null=True, blank=True)
+    
+    def __str__(self):
+        return f"{self.username} - {self.contact}"

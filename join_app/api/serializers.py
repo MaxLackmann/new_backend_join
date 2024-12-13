@@ -1,16 +1,14 @@
 from rest_framework import serializers
-from ..models import Contact, User, Task, Subtask
+from ..models import Contact, Task, Subtask#, TaskUsers, UserContacts
+from user_auth_app.models import CustomUser
+from user_auth_app.api.serializers import CustomUserSerializer
 
 class ContactSerializer(serializers.ModelSerializer):
     class Meta:
         model = Contact
-        fields = ('id', 'name', 'email', 'phone', 'emblem', 'color', 'checked')
-    
+        fields = ('id', 'name', 'email', 'phone', 'emblem', 'color')
 
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ('id', 'name', 'email', 'password', 'confirm_password', 'emblem', 'color')
+
         
 class SubtaskSerializer(serializers.ModelSerializer):
     class Meta:
@@ -24,24 +22,24 @@ class SubtaskSerializer(serializers.ModelSerializer):
         return value
         
 class TaskSerializer(serializers.ModelSerializer):
-    contact_ids = serializers.PrimaryKeyRelatedField(many=True, queryset=Contact.objects.all(), source='contacts')
-    contacts = ContactSerializer(many=True, read_only=True)
+    username_ids = serializers.PrimaryKeyRelatedField(many=True, queryset=CustomUser.objects.all(), source='users')
+    usernames = CustomUserSerializer(many=True, read_only=True)
     subtasks = SubtaskSerializer(many=True)
 
     class Meta:
         model = Task
-        fields = ('cardId', 'title', 'description', 'date', 'priority', 'category', 'status', 'contact_ids', 'contacts', 'subtasks')
+        fields = ('cardId', 'title', 'description', 'date', 'priority', 'category', 'status', 'username_ids', 'username', 'subtasks')
 
     def create(self, validated_data):
         subtasks_data = validated_data.pop('subtasks', [])
-        contacts_data = validated_data.pop('contacts', [])
+        usernames_data   = validated_data.pop('usernames', [])
 
         task = Task.objects.create(**validated_data)
 
-        task.contacts.set(contacts_data)
-        for contact in contacts_data:
-            contact.checked = True
-            contact.save()
+        task.users.set(usernames_data )
+        for user in usernames_data :
+            user.checked = True
+            user.save()
 
         self._create_subtasks(task, subtasks_data)
 
@@ -50,13 +48,14 @@ class TaskSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         self._classic_update(instance, validated_data)
         
-        existing_contacts = set(instance.contacts.all())
-        new_contacts_data = validated_data.pop('contacts', [])
+        existing_usernames = set(instance.usernames.all())
+        new_usernames_data = validated_data.pop('usernames', [])
         
-        self._removechecked(existing_contacts, new_contacts_data)
+        self._removechecked(existing_usernames, new_usernames_data)
 
-        instance.contacts.set(new_contacts_data)
-        self._setchecked(new_contacts_data)
+        instance.username.set(new_usernames_data)
+        self._setchecked(new_usernames_data, instance) # das instance kommt von chatgpt
+
 
         subtasks_data = validated_data.pop('subtasks', [])
         self._update_subtasks(instance, subtasks_data)
@@ -74,16 +73,16 @@ class TaskSerializer(serializers.ModelSerializer):
         instance.status = validated_data.get('status', instance.status)
         instance.save()
     
-    def _removechecked(self, existing_contacts, new_contacts_data):
-        for contact in existing_contacts:
-            if contact not in new_contacts_data:
-                contact.checked = False
-                contact.save()
+    def _removechecked(self, existing_usernames, new_usernames_data):
+        for user in existing_usernames:
+            if user not in new_usernames_data:
+                user.checked = False
+                user.save()
         
-    def _setchecked(self, new_contacts_data):
-        for contact in new_contacts_data:
-            contact.checked = True
-            contact.save()
+    def _setchecked(self, new_usernames_data):
+        for user in new_usernames_data:
+            user.checked = True
+            user.save()
 
     def _create_subtasks(self, task, subtasks_data):
         for subtask_data in subtasks_data:

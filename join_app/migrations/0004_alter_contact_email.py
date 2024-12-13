@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('join_app', '0004_create_guest_user'),
+        ('join_app', '0003_alter_subtask_task_alter_task_priority'),
     ]
 
     operations = [

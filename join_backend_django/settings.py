@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework.authtoken',
     'join_app',
     'user_auth_app',
     'corsheaders',
@@ -142,3 +143,5 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
     ]
 }
+
+AUTH_USER_MODEL = 'user_auth_app.CustomUser'
