@@ -1,28 +1,26 @@
 from rest_framework import serializers
-from ..models import Contact, Task, Subtask#, TaskUsers, UserContacts
+from ..models import Contact, Task, Subtask, ContactUserDetails, TaskUserDetails
 from user_auth_app.models import CustomUser
 from user_auth_app.api.serializers import CustomUserSerializer
 
 class ContactSerializer(serializers.ModelSerializer):
+    
     class Meta:
         model = Contact
         fields = ('id', 'name', 'email', 'phone', 'emblem', 'color')
 
-class CustomUserDetailSerializer(serializers.ModelSerializer):
-    contacts = serializers.SerializerMethodField()
-    tasks = serializers.SerializerMethodField()
-
-    class Meta:
-        model = CustomUser
-        fields = ['id', 'username', 'email', 'emblem', 'color', 'contacts', 'tasks']
-
-    def get_contacts(self, obj):
-        contacts = Contact.objects.filter(username=obj)
-        return ContactSerializer(contacts, many=True).data
-
-    def get_tasks(self, obj):
-        tasks = Task.objects.filter(username=obj)
-        return TaskSerializer(tasks, many=True).data
+    def create(self, validated_data):
+        user = self.context['request'].user
+        if not Contact.objects.filter(user=user, email=user.email).exists():
+            Contact.objects.create(
+                user=user,
+                name=user.username,
+                email=user.email,
+                phone="",  # oder andere Standardwerte
+                emblem=user.emblem,
+                color=user.color,
+            )
+        return super().create(validated_data)
 
 class SubtaskSerializer(serializers.ModelSerializer):
     class Meta:

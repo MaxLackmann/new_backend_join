@@ -21,15 +21,9 @@ class RegisterView(APIView):
     def post(self, request):
         serializer = UserRegisterSerializer(data=request.data)
         
-        data = {}
         if serializer.is_valid():
-            saved_account = serializer.save()
-            print("Saved account:", saved_account)  # Debugging: Überprüft den Benutzer
-            print("Password (hashed):", saved_account.password)  # Debugging: Zeigt das Passwort (sollte ein Hash sein)
-            token, created = Token.objects.get_or_create(user=saved_account)
-            print("Token generated:", token.key)  # Debugging: Überprüft den Token
+            serializer.save()
             data = serializer.data
-            data['token'] = token.key
         else:
             print("Registration errors:", serializer.errors)  # Debugging: Zeigt Fehler bei der Registrierung
             data = serializer.errors
