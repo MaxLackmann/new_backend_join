@@ -34,7 +34,11 @@ class Task(models.Model):
     priority = models.CharField(max_length=20, blank=True)
     category = models.CharField(max_length=100)
     status = models.CharField(max_length=20)
-    user = models.ManyToManyField(CustomUser, blank=True, related_name='tasks')    
+    user = models.ManyToManyField(
+        CustomUser, 
+        through='TaskUserDetails',  # Hier das Zwischenspeicher-Modell definieren
+        related_name='tasks'
+    )  
     def __str__(self):
         return self.title
     

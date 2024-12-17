@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from ..models import Contact, Task, Subtask, ContactUserDetails, TaskUserDetails
+from ..models import Contact, Task, Subtask, TaskUserDetails #ContactUserDetails
 from user_auth_app.models import CustomUser
 from user_auth_app.api.serializers import CustomUserSerializer
 
@@ -32,50 +32,64 @@ class SubtaskSerializer(serializers.ModelSerializer):
         if len(value) > 5: 
             raise serializers.ValidationError("Es sind maximal 5 Subtasks erlaubt.")
         return value
+    
+class TaskUserDetailsSerializer(serializers.ModelSerializer):
+    user = CustomUserSerializer()
+
+    class Meta:
+        model = TaskUserDetails
+        fields = ('user', 'checked')
         
 class TaskSerializer(serializers.ModelSerializer):
-    username_ids = serializers.PrimaryKeyRelatedField(many=True, queryset=CustomUser.objects.all(), source='users')
-    usernames = CustomUserSerializer(many=True, read_only=True)
-    subtasks = SubtaskSerializer(many=True)
+    user_ids = serializers.PrimaryKeyRelatedField(
+        queryset=CustomUser.objects.all(),
+        many=True,
+        required=False,
+        source='user'
+    )
+    user = TaskUserDetailsSerializer(source='user_statuses', many=True, read_only=True)
+    subtasks = SubtaskSerializer(many=True, required=False)
 
     class Meta:
         model = Task
-        fields = ('cardId', 'title', 'description', 'date', 'priority', 'category', 'status', 'username_ids', 'usernames', 'subtasks')
+        fields = ('cardId', 'title', 'description', 'date', 'priority', 'category', 'status', 'user_ids', 'user', 'subtasks')
 
     def create(self, validated_data):
         subtasks_data = validated_data.pop('subtasks', [])
-        usernames_data   = validated_data.pop('usernames', [])
+        user_ids = validated_data.pop('user', [])
 
+        # Task erstellen
         task = Task.objects.create(**validated_data)
 
-        task.users.set(usernames_data )
-        for user in usernames_data :
-            user.checked = True
-            user.save()
+        # Benutzer in die Zwischentabelle eintragen
+        for user in user_ids:
+            TaskUserDetails.objects.create(task=task, user=user, checked=True)
 
+        # Subtasks erstellen
         self._create_subtasks(task, subtasks_data)
 
         return task
 
     def update(self, instance, validated_data):
-        self._classic_update(instance, validated_data)
-        
-        existing_usernames = set(instance.usernames.all())
-        new_usernames_data = validated_data.pop('usernames', [])
-        
-        self._removechecked(existing_usernames, new_usernames_data)
-
-        instance.username.set(new_usernames_data)
-        self._setchecked(new_usernames_data, instance) # das instance kommt von chatgpt
-
-
+        user_ids = validated_data.pop('user', [])
         subtasks_data = validated_data.pop('subtasks', [])
+
+        # Aktualisiere Task selbst
+        self._classic_update(instance, validated_data)
+
+        # Benutzer aktualisieren
+        instance.user.clear()
+        for user in user_ids:
+            TaskUserDetails.objects.update_or_create(
+                task=instance, user=user,
+                defaults={"checked": True}
+            )
+
+        # Subtasks aktualisieren
         self._update_subtasks(instance, subtasks_data)
 
-        instance.save()
-
         return instance
-    
+
     def _classic_update(self, instance, validated_data):
         instance.title = validated_data.get('title', instance.title)
         instance.description = validated_data.get('description', instance.description)
@@ -84,17 +98,6 @@ class TaskSerializer(serializers.ModelSerializer):
         instance.category = validated_data.get('category', instance.category)
         instance.status = validated_data.get('status', instance.status)
         instance.save()
-    
-    def _removechecked(self, existing_usernames, new_usernames_data):
-        for user in existing_usernames:
-            if user not in new_usernames_data:
-                user.checked = False
-                user.save()
-        
-    def _setchecked(self, new_usernames_data):
-        for user in new_usernames_data:
-            user.checked = True
-            user.save()
 
     def _create_subtasks(self, task, subtasks_data):
         for subtask_data in subtasks_data:
@@ -113,8 +116,8 @@ class TaskSerializer(serializers.ModelSerializer):
                 subtask.save()
                 received_subtask_ids.add(subtask_id)
             else:
-                new_subtask = Subtask.objects.create(task=instance, **subtask_data)
-                received_subtask_ids.add(new_subtask.id)
+                Subtask.objects.create(task=instance, **subtask_data)
+                received_subtask_ids.add(subtask_id)
 
         for subtask_id in existing_subtask_ids - received_subtask_ids:
             Subtask.objects.filter(id=subtask_id).delete()

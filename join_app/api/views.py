@@ -1,7 +1,7 @@
 from django.shortcuts import get_object_or_404, render
 from rest_framework import generics, status
 from rest_framework.response import Response
-from .serializers import ContactSerializer, TaskSerializer, SubtaskSerializer
+from .serializers import ContactSerializer, TaskSerializer, SubtaskSerializer 
 from ..models import Contact,Task, Subtask, TaskUserDetails, ContactUserDetails
 
 class ContactList(generics.ListCreateAPIView):
@@ -34,9 +34,12 @@ class ContactDetail(generics.RetrieveUpdateDestroyAPIView):
 class TaskList(generics.ListCreateAPIView):
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
-
+    
     def get_queryset(self):
-        # Nur Tasks des aktuellen Benutzers abrufen
+        """
+        Filter Tasks so, dass nur Tasks zurückgegeben werden,
+        die dem eingeloggten Benutzer zugeordnet sind.
+        """
         return Task.objects.filter(user=self.request.user)
 
     def post(self, request, *args, **kwargs):

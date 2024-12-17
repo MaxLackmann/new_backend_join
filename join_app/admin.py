@@ -16,7 +16,7 @@ class TaskAdmin(admin.ModelAdmin):
 
     def display_users(self, obj):
         # Gibt eine kommagetrennte Liste der Nutzer zurück
-        return ", ".join([user.username for user in obj.users.all()])
+        return ", ".join([user.username for user in obj.user.all()])
     display_users.short_description = "Users"
 
     def display_subtasks(self, obj):

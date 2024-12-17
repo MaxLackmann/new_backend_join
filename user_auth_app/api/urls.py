@@ -12,6 +12,7 @@ urlpatterns = [
     path('login/', EmailLoginView.as_view(), name='login'),
 
     # Benutzer-spezifische Tasks
+    path('users/tasks/', TaskList.as_view(), name='task-list'),
     path('users/<int:pk>/tasks/', TaskList.as_view(), name='user-task-list'),
     path('users/<int:pk>/tasks/<int:task_id>/', TaskDetail.as_view(), name='user-task-detail'),
 
