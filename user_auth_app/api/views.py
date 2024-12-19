@@ -7,6 +7,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from .serializers import EmailAuthTokenSerializer
 from rest_framework.authtoken.models import Token
+from rest_framework.permissions import IsAuthenticated
 
 class CustomerUserList(generics.ListCreateAPIView):
     queryset = CustomUser.objects.all()
@@ -15,6 +16,13 @@ class CustomerUserList(generics.ListCreateAPIView):
 class CustomerUserDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
+
+class CurrentUser(generics.RetrieveAPIView):
+    serializer_class = CustomUserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user
     
 class RegisterView(APIView):
     permission_classes = (AllowAny,)

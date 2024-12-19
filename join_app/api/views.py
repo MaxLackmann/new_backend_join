@@ -11,7 +11,6 @@ class ContactList(generics.ListCreateAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        # Kontakte des Benutzers abrufen
         contacts = Contact.objects.filter(user=user)
 
         # Benutzer selbst hinzufügen, wenn nicht vorhanden

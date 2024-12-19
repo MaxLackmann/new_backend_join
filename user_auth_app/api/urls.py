@@ -1,9 +1,10 @@
 from django.urls import path
 from join_app.api.views import ContactList, ContactDetail, TaskList, TaskDetail, SubtaskList, SubtaskDetail
-from .views import CustomerUserList, CustomerUserDetail, RegisterView, EmailLoginView
+from .views import CustomerUserList, CustomerUserDetail, CurrentUser, RegisterView, EmailLoginView
 
 urlpatterns = [
     # Benutzerverwaltung
+    path('user/', CurrentUser.as_view(), name='currentuser'),
     path('users/', CustomerUserList.as_view(), name='customeruser-list'),
     path('users/<int:pk>/', CustomerUserDetail.as_view(), name='customeruser-detail'),
 
