@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Contact, Task, Subtask, ContactUserDetails, TaskUserDetails
+from .models import Contact, Task, Subtask, TaskUserDetails
 
 class SubtaskInline(admin.TabularInline):
     model = Subtask
@@ -31,7 +31,3 @@ class SubtaskAdmin(admin.ModelAdmin):
 @admin.register(TaskUserDetails)
 class TaskUserDetailsrAdmin(admin.ModelAdmin):
     list_display = ('user', 'task', 'checked')
-
-@admin.register(ContactUserDetails)
-class ContactUserDetailsAdmin(admin.ModelAdmin):
-    list_display = ('user', 'contact', 'phone')

@@ -11,17 +11,15 @@ urlpatterns = [
     path('registration/', RegisterView.as_view(), name='register'),
     path('login/', EmailLoginView.as_view(), name='login'),
 
-    # Benutzer-spezifische Tasks
-    path('users/tasks/', TaskList.as_view(), name='task-list'),
-    path('users/<int:pk>/tasks/', TaskList.as_view(), name='user-task-list'),
-    path('users/<int:pk>/tasks/<int:task_id>/', TaskDetail.as_view(), name='user-task-detail'),
+    # Tasks (keine Benutzer-ID notwendig)
+    path('tasks/', TaskList.as_view(), name='task-list'),
+    path('tasks/<int:cardId>/', TaskDetail.as_view(), name='task-detail'),
 
-    # Benutzer-spezifische Subtasks
-    path('users/<int:pk>/tasks/<int:task_id>/subtasks/', SubtaskList.as_view(), name='user-task-subtask-list'),
-    path('users/<int:pk>/tasks/<int:task_id>/subtasks/<int:subtask_id>/', SubtaskDetail.as_view(), name='user-task-subtask-detail'),
+    # Subtasks (Task-ID notwendig)
+    path('tasks/<int:cardId>/subtasks/', SubtaskList.as_view(), name='task-subtask-list'),
+    path('tasks/<int:cardId>/subtasks/<int:id>/', SubtaskDetail.as_view(), name='task-subtask-detail'),
 
-    # Benutzer-spezifische Kontakte
-    path('users/<int:pk>/contacts/', ContactList.as_view(), name='user-contact-list'),
-    path('users/<int:pk>/contacts/<int:contact_id>/', ContactDetail.as_view(), name='user-contact-detail'),
-
+    # Kontakte (keine Benutzer-ID notwendig)
+    path('contacts/', ContactList.as_view(), name='contact-list'),
+    path('contacts/<int:id>/', ContactDetail.as_view(), name='contact-detail'),
 ]

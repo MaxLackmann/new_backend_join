@@ -17,7 +17,8 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         return data
     
     def create(self, validated_data):
-        validated_data.pop('confirm_password') 
+        validated_data.pop('confirm_password')
+        validated_data['email'] = validated_data['email'].lower()
         user = CustomUser.objects.create_user(**validated_data)
         return user
     
@@ -32,14 +33,14 @@ class EmailAuthTokenSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True)
 
     def validate(self, attrs):
-        email = attrs.get('email')
+        email = attrs.get('email').lower()
         password = attrs.get('password')
 
-        print("Authenticating with:", email, password)  # Debugging
+        print(f"Validating email: {email}, password: {password}")  # Debugging
 
         if email and password:
             user = authenticate(username=email, password=password)
-            print("Authenticated user:", user)  # Debugging
+            print("Authenticated user:", user) 
             if not user:
                 raise serializers.ValidationError("Unable to log in with provided credentials.")
         else:

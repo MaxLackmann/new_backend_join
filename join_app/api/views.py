@@ -1,87 +1,96 @@
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.response import Response
-from .serializers import ContactSerializer, TaskSerializer, SubtaskSerializer 
-from ..models import Contact,Task, Subtask, TaskUserDetails, ContactUserDetails
+from rest_framework.permissions import IsAuthenticated
+from .serializers import ContactSerializer, TaskSerializer, SubtaskSerializer
+from ..models import Contact, Task, Subtask
 
 class ContactList(generics.ListCreateAPIView):
     serializer_class = ContactSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
-        # Prüfen, ob der Benutzer sich selbst als Kontakt hat
-        if not Contact.objects.filter(user=user, email=user.email).exists():
+        # Kontakte des Benutzers abrufen
+        contacts = Contact.objects.filter(user=user)
+
+        # Benutzer selbst hinzufügen, wenn nicht vorhanden
+        if not contacts.filter(email=user.email).exists():
             Contact.objects.create(
                 user=user,
                 name=user.username,
                 email=user.email,
-                phone="",  # oder andere Standardwerte
                 emblem=user.emblem,
                 color=user.color,
-            )
-        # Kontakte des aktuellen Benutzers abrufen
-        return Contact.objects.filter(user=user)
+                phone="123456789",
 
-    
+            )
+        return contacts
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
 class ContactDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Contact.objects.all()
     serializer_class = ContactSerializer
+    permission_classes = [IsAuthenticated]
+    lookup_field = 'id'
 
     def get_queryset(self):
-        # Nur Kontakte des aktuellen Benutzers abrufen
         return Contact.objects.filter(user=self.request.user)
 
 class TaskList(generics.ListCreateAPIView):
-    queryset = Task.objects.all()
     serializer_class = TaskSerializer
-    
-    def get_queryset(self):
-        """
-        Filter Tasks so, dass nur Tasks zurückgegeben werden,
-        die dem eingeloggten Benutzer zugeordnet sind.
-        """
-        return Task.objects.filter(user=self.request.user)
+    permission_classes = [IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
-        serializer = TaskSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=201)
-        return Response(serializer.errors, status=400)
-    
+    def get_queryset(self):
+        return Task.objects.filter(created_by=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
 class TaskDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Task.objects.all()
     serializer_class = TaskSerializer
+    permission_classes = [IsAuthenticated]
+    lookup_field = 'cardId'
 
     def get_queryset(self):
-        # Nur Tasks des aktuellen Benutzers abrufen
-        return Task.objects.filter(user=self.request.user)
-    
+        return Task.objects.filter(created_by=self.request.user)
+
 class SubtaskList(generics.ListCreateAPIView):
-    queryset = Subtask.objects.all()
     serializer_class = SubtaskSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        # Subtasks nur für Tasks des aktuellen Benutzers abrufen
-        return Subtask.objects.filter(task__user=self.request.user)
-    
+        task = self._get_task()
+        return Subtask.objects.filter(task=task)
+
+    def perform_create(self, serializer):
+        task = self._get_task()
+        serializer.save(task=task)
+
+    def _get_task(self):
+        task_id = self.kwargs.get('cardId')
+        return get_object_or_404(Task, cardId=task_id, created_by=self.request.user)
+
 class SubtaskDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Subtask.objects.all()
     serializer_class = SubtaskSerializer
-    
-    def get_queryset(self):
-        # Subtasks nur für Tasks des aktuellen Benutzers abrufen
-        return Subtask.objects.filter(task__user=self.request.user)
+    permission_classes = [IsAuthenticated]
+    lookup_field = 'id'
 
     def patch(self, request, *args, **kwargs):
-        task_id = kwargs.get('task_id')
-        subtask_id = kwargs.get('subtask_id')
-
-        task = get_object_or_404(Task, id=task_id, user=self.request.user)
-        subtask = get_object_or_404(Subtask, id=subtask_id, task=task)
-
+        task = self._get_task()
+        subtask = self._get_subtask(task)
         serializer = self.serializer_class(subtask, data=request.data, partial=True)
+
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def _get_task(self):
+        task_id = self.kwargs.get('cardId')
+        return get_object_or_404(Task, cardId=task_id, created_by=self.request.user)
+
+    def _get_subtask(self, task):
+        subtask_id = self.kwargs.get('id')
+        return get_object_or_404(Subtask, id=subtask_id, task=task)
