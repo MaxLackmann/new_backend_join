@@ -57,6 +57,24 @@ class TaskDetail(generics.RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         return Task.objects.filter(created_by=self.request.user)
+    
+    def patch(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if 'status' in request.data:
+            status_value = request.data.get('status')
+            if not status_value:
+                return Response(
+                    {"error": "Status field is required"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            instance.status = status_value
+            instance.save()
+            return Response(
+                {"message": "Status updated successfully", "status": instance.status}
+            )
+        
+        # Fallback auf das normale partial_update fÃ¼r andere Felder
+        return super().partial_update(request, *args, **kwargs)
 
 class SubtaskList(generics.ListCreateAPIView):
     serializer_class = SubtaskSerializer

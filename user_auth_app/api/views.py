@@ -36,7 +36,7 @@ class RegisterView(APIView):
             serializer.save()
             data = serializer.data
         else:
-            print("Registration errors:", serializer.errors)  # Debugging: Zeigt Fehler bei der Registrierung
+            print("Registration errors:", serializer.errors)
             data = serializer.errors
         return Response(data)
 
@@ -44,13 +44,13 @@ class EmailLoginView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        print("Request received with data:", request.data)  # Debugging statement to inspect request data
+        print("Request received with data:", request.data) 
         serializer = EmailAuthTokenSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.validated_data['user']
-            print("User authenticated:", user)  # Debugging authenticated user details
+            print("User authenticated:", user)
 
-            # Ensure the user is active before proceeding
+
             if not user.is_active:
                 return Response({"error": "User account is inactive."}, status=status.HTTP_403_FORBIDDEN)
 
@@ -61,7 +61,7 @@ class EmailLoginView(APIView):
                 'email': user.email,
             }
             return Response(data, status=status.HTTP_200_OK)
-        print("Validation errors:", serializer.errors)  # Debugging validation errors
+        print("Validation errors:", serializer.errors)
         return Response(serializer.errors, status=400)
     
 
