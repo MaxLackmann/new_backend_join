@@ -19,6 +19,7 @@ class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
     emblem = models.CharField(max_length=100, blank=True)
     color = models.CharField(max_length=100, null=True, blank=True)
+    is_guest = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']

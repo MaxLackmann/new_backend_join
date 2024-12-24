@@ -36,7 +36,7 @@ class EmailAuthTokenSerializer(serializers.Serializer):
         email = attrs.get('email').lower()
         password = attrs.get('password')
 
-        print(f"Validating email: {email}, password: {password}")  # Debugging
+        print(f"Validating email: {email}, password: {password}")
 
         if email and password:
             user = authenticate(username=email, password=password)

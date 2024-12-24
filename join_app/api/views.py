@@ -13,17 +13,17 @@ class ContactList(generics.ListCreateAPIView):
         user = self.request.user
         contacts = Contact.objects.filter(user=user)
 
-        # Benutzer selbst hinzufügen, wenn nicht vorhanden
+        # Stelle sicher, dass der Benutzer als Kontakt existiert
         if not contacts.filter(email=user.email).exists():
             Contact.objects.create(
                 user=user,
-                name=user.username,
-                email=user.email,
-                emblem=user.emblem,
-                color=user.color,
-                phone="123456789",
-
+                name=user.username or "Gast",
+                email=user.email or f"{user.username}@guest.com",
+                emblem=user.emblem or "G",
+                color=user.color or "#cccccc",
+                phone="N/A"
             )
+
         return contacts
 
     def perform_create(self, serializer):
@@ -42,7 +42,10 @@ class TaskList(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Task.objects.filter(created_by=self.request.user)
+        user = self.request.user
+        if user.is_guest:
+            return Task.objects.filter(created_by=user)
+        return Task.objects.filter(created_by=user)
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
@@ -69,7 +72,8 @@ class SubtaskList(generics.ListCreateAPIView):
 
     def _get_task(self):
         task_id = self.kwargs.get('cardId')
-        return get_object_or_404(Task, cardId=task_id, created_by=self.request.user)
+        user = self.request.user
+        return get_object_or_404(Task, cardId=task_id, created_by=user)
 
 class SubtaskDetail(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = SubtaskSerializer
@@ -92,4 +96,5 @@ class SubtaskDetail(generics.RetrieveUpdateDestroyAPIView):
 
     def _get_subtask(self, task):
         subtask_id = self.kwargs.get('id')
+        user = self.request.user
         return get_object_or_404(Subtask, id=subtask_id, task=task)
