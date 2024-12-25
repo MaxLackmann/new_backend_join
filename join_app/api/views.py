@@ -73,7 +73,6 @@ class TaskDetail(generics.RetrieveUpdateDestroyAPIView):
                 {"message": "Status updated successfully", "status": instance.status}
             )
         
-        # Fallback auf das normale partial_update fÃ¼r andere Felder
         return super().partial_update(request, *args, **kwargs)
 
 class SubtaskList(generics.ListCreateAPIView):
