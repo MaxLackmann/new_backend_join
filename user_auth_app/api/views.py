@@ -9,7 +9,6 @@ from .serializers import EmailAuthTokenSerializer
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated
 import uuid
-from join_app.models import Contact
 from django.utils.timezone import now
 from datetime import timedelta
 
@@ -32,6 +31,7 @@ class CurrentUser(generics.RetrieveAPIView):
 class RegisterView(APIView):
     permission_classes = (AllowAny,)
     def post(self, request):
+        print("Request received with data:", request.data)
         serializer = UserRegisterSerializer(data=request.data)
         
         if serializer.is_valid():
@@ -74,10 +74,6 @@ class EmailLoginView(APIView):
         return Response(serializer.errors, status=400)
     
 
-from django.utils.timezone import now
-from datetime import timedelta
-from user_auth_app.models import CustomUser
-
 class GuestLoginView(APIView):
     permission_classes = [AllowAny]
 
@@ -99,6 +95,7 @@ class GuestLoginView(APIView):
         guest_user = CustomUser.objects.create_user(
             username=guest_username,
             email=guest_email,
+            phone="123456789",
             password=None,
             is_guest=True,
             emblem="G",
@@ -112,6 +109,7 @@ class GuestLoginView(APIView):
         return Response({
             "token": token.key,
             "email": guest_user.email,
+            "phone": guest_user.phone,
             "username": guest_user.username,
             "emblem": guest_user.emblem,
             "color": guest_user.color

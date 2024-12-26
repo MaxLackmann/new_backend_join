@@ -9,6 +9,7 @@ def validate_username(value):
             'Benutzername darf nur Buchstaben, Zahlen, Leerzeichen und @/./+/-/_ enthalten.',
             code='invalid'
         )
+    
 
 class CustomUser(AbstractUser):
     username = models.CharField(
@@ -18,6 +19,7 @@ class CustomUser(AbstractUser):
         help_text='150 Zeichen oder weniger. Buchstaben, Zahlen, Leerzeichen und @/./+/-/_ erlaubt.',
     )
     email = models.EmailField(unique=True)
+    phone = models.CharField(max_length=13, default="123456789")
     emblem = models.CharField(max_length=100, blank=True)
     color = models.CharField(max_length=100, null=True, blank=True)
     is_guest = models.BooleanField(default=False)

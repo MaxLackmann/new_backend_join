@@ -5,7 +5,6 @@ from user_auth_app.api.serializers import CustomUserSerializer
 
 class ContactSerializer(serializers.ModelSerializer):
     phone = serializers.CharField(required=False)
-
     class Meta:
         model = Contact
         fields = ('id', 'name', 'email', 'phone', 'emblem', 'color')
