@@ -21,7 +21,7 @@ class ContactList(generics.ListCreateAPIView):
                 email=user.email or f"{user.username}@guest.com",
                 emblem=user.emblem or "G",
                 color=user.color or "#cccccc",
-                phone="N/A"
+                phone=user.phone or "N/A"
             )
 
         return contacts
