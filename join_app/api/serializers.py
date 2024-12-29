@@ -4,9 +4,6 @@ from user_auth_app.models import CustomUser
 from user_auth_app.api.serializers import CustomUserSerializer
 import re
 
-from rest_framework import serializers
-from ..models import Contact
-
 class ContactSerializer(serializers.ModelSerializer):
     phone = serializers.CharField(required=False)
 
@@ -29,6 +26,15 @@ class ContactSerializer(serializers.ModelSerializer):
         if Contact.objects.filter(user=user, email=value).exclude(id=contact_id).exists():
             raise serializers.ValidationError("Diese E-Mail existiert bereits in Ihrer Kontaktliste.")
         
+        return value
+    
+    def validate_phone(self, value):
+        """
+        Validiert das Format der Telefonnummer.
+        """
+        phone_regex = r'^\+?[0-9\s\-]{6,13}$'
+        if not re.match(phone_regex, value):
+            raise serializers.ValidationError("Die Telefonnummer muss zwischen 6 und 13 Zeichen lang sein und darf nur Ziffern, Leerzeichen, Bindestriche oder ein '+' enthalten.")
         return value
 
     def create(self, validated_data):

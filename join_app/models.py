@@ -12,10 +12,15 @@ def validate_email_format(value):
     if not re.match(email_regex, value):
         raise ValidationError("Die E-Mail-Adresse muss eine gültige Top-Level-Domain (z.B. .de, .com, .net) haben.")
 
+def validate_phone_format(value):
+    phone_regex = r'^\+?[0-9\s\-]{6,13}$'
+    if not re.match(phone_regex, value):
+        raise ValidationError("Die Telefonnummer muss zwischen 6 und 13 Zeichen lang sein und darf nur Ziffern, Leerzeichen, Bindestriche oder ein '+' enthalten.")
+
 class Contact(models.Model):
     name = models.CharField(max_length=50)
     email = models.EmailField(validators=[validate_email_format])
-    phone = models.CharField(max_length=13)
+    phone = models.CharField(max_length=13, validators=[validate_phone_format])
     emblem = models.CharField(max_length=100)
     color = models.CharField(max_length=100)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='contacts')
