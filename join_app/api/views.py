@@ -10,10 +10,7 @@ class ContactList(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        user = self.request.user
-        contacts = Contact.objects.filter(user=user)
-
-        return contacts
+        return Contact.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)

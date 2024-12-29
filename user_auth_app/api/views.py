@@ -21,7 +21,7 @@ class CustomerUserDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
 
-class CurrentUser(generics.RetrieveAPIView):
+class CurrentUser(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CustomUserSerializer
     permission_classes = [IsAuthenticated]
 

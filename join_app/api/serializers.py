@@ -2,6 +2,7 @@ from rest_framework import serializers
 from ..models import Contact, Task, Subtask, TaskUserDetails
 from user_auth_app.models import CustomUser
 from user_auth_app.api.serializers import CustomUserSerializer
+import re
 
 from rest_framework import serializers
 from ..models import Contact
@@ -14,14 +15,27 @@ class ContactSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'email', 'phone', 'emblem', 'color')
         read_only_fields = ('id',)
 
-    def create(self, validated_data):
-        # Kontakte erstellen und Benutzer setzen
+    def validate_email(self, value):
+        """
+        Stellt sicher, dass die E-Mail eine gültige Struktur und TLD besitzt.
+        """
+        email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_regex, value):
+            raise serializers.ValidationError("Die E-Mail-Adresse muss eine gültige Top-Level-Domain (z.B. .de, .com, .net) haben.")
+        
         user = self.context['request'].user
-        validated_data['user'] = user
+        contact_id = self.instance.id if self.instance else None
+        
+        if Contact.objects.filter(user=user, email=value).exclude(id=contact_id).exists():
+            raise serializers.ValidationError("Diese E-Mail existiert bereits in Ihrer Kontaktliste.")
+        
+        return value
+
+    def create(self, validated_data):
+        validated_data['user'] = self.context['request'].user
         return super().create(validated_data)
 
     def update(self, instance, validated_data):
-        # Aktualisiere nur Kontakt-Daten, NICHT Benutzer-Daten
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
@@ -30,11 +44,8 @@ class ContactSerializer(serializers.ModelSerializer):
     
     def perform_destroy(self, instance):
         user = instance.user
-        
-        # Lösche zuerst den Kontakt
         instance.delete()
 
-        # Lösche auch den Benutzer, wenn er der aktuelle Benutzer ist
         if user == self.request.user:
             user.delete()
 
