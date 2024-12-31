@@ -11,26 +11,17 @@ class ContactSerializer(serializers.ModelSerializer):
         read_only_fields = ('id',)
 
     def validate_email(self, value):
-        """
-        Validiert die E-Mail eines Kontakts:
-        - Sie darf nicht die gleiche E-Mail wie die des aktuellen Benutzers sein.
-        - Sie darf nicht bereits einem anderen Kontakt desselben Benutzers gehören.
-        - Sie darf nicht bereits einem anderen Benutzer gehören.
-        """
         user = self.context['request'].user
         contact_id = self.instance.id if self.instance else None
 
-        # 🔹 1. E-Mail darf nicht die des Benutzers sein
         if user.email == value:
             raise serializers.ValidationError("E-Mail cannot be the same as the user's E-Mail.")
 
-        # 🔹 2. E-Mail darf nicht einem anderen Kontakt des Benutzers gehören
         if Contact.objects.filter(user=user, email=value).exclude(id=contact_id).exists():
-            raise serializers.ValidationError("This email is already associated with another contact of yours.")
+            raise serializers.ValidationError("email already exists.")
 
-        # 🔹 3. E-Mail darf nicht einem anderen Benutzer gehören
         if CustomUser.objects.filter(email=value).exists():
-            raise serializers.ValidationError("This email is already associated with a user account.")
+            raise serializers.ValidationError("email already exists.")
 
         return value
 
@@ -60,7 +51,7 @@ class SubtaskSerializer(serializers.ModelSerializer):
 
     def validate_subtasks(self, value):
         if len(value) > 5:
-            raise serializers.ValidationError("Es sind maximal 5 Subtasks erlaubt.")
+            raise serializers.ValidationError("maximum 5 subtasks.")
         return value
 
 class TaskUserDetailsSerializer(serializers.ModelSerializer):

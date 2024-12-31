@@ -22,7 +22,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         Überprüft, ob die E-Mail bereits verwendet wird.
         """
         if CustomUser.objects.filter(email=value).exists():
-            raise serializers.ValidationError("This email is already in use. Please use a different email.")
+            raise serializers.ValidationError("email is already in use.")
         return value
 
     def validate_username(self, value):
@@ -30,7 +30,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         Überprüft, ob der Benutzername bereits verwendet wird.
         """
         if CustomUser.objects.filter(username=value).exists():
-            raise serializers.ValidationError("This username is already taken. Please choose another one.")
+            raise serializers.ValidationError("username is already taken.")
         return value
     
     def create(self, validated_data):

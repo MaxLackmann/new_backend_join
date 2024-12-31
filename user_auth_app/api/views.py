@@ -146,7 +146,7 @@ class ValidateTokenView(APIView):
         current_time = now()
         inactivity_duration = (current_time - request.user.last_activity).total_seconds() / 60
 
-        if inactivity_duration > 1:  # Timeout von 1 Minute
+        if inactivity_duration > 1:
             print(f"[ValidateTokenView] Token abgelaufen für Benutzer: {request.user.email}")
             return Response({"message": "Token expired"}, status=status.HTTP_401_UNAUTHORIZED)
 
