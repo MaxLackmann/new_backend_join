@@ -19,7 +19,6 @@ class UpdateLastActivityMiddleware:
                     request.user.last_activity = current_time
                     request.user.save(update_fields=['last_activity'])
             else:
-                # Initiale Aktivität setzen, falls sie noch nicht gesetzt wurde
                 request.user.last_activity = current_time
                 request.user.save(update_fields=['last_activity'])
         
@@ -30,7 +29,7 @@ class UpdateLastActivityMiddleware:
         inactive_guests = CustomUser.objects.filter(
             is_guest=True,
             last_activity__lt=guest_threshold_time,
-            date_joined__lt=grace_period_time  # Gäste, die älter als 1 Minuten sind
+            date_joined__lt=grace_period_time
         )
         
         if inactive_guests.exists():
@@ -43,7 +42,7 @@ class UpdateLastActivityMiddleware:
                     print(f"[Middleware] Fehler beim Löschen von Gast-Benutzer {guest.email}: {e}")
             print("[Middleware] Inaktive Gäste erfolgreich gelöscht.")
         
-        # 🔑 **3. Lösche Token für inaktive Benutzer**
+        # 🔑 **3. Lösche Token für inaktive Benutzer nach 1min**
         user_threshold_time = now() - timedelta(minutes=1)
         inactive_users = CustomUser.objects.filter(
             is_guest=False,

@@ -1,39 +1,32 @@
 from django.db import models
 from user_auth_app.models import CustomUser
 from django.core.exceptions import ValidationError
-import re
+from user_auth_app.api.validators import validate_username_format, validate_phone_format
 
-
-def validate_email_format(value):
-    """
-    Stellt sicher, dass die E-Mail eine gültige Struktur und TLD besitzt.
-    """
-    email_regex = r'^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-    if not re.match(email_regex, value):
-        raise ValidationError("Die E-Mail-Adresse muss eine gültige Top-Level-Domain (z.B. .de, .com, .net) haben.")
-
-def validate_phone_format(value):
-    phone_regex = r'^\+?[0-9\s\-]{6,13}$'
-    if not re.match(phone_regex, value):
-        raise ValidationError("Die Telefonnummer muss zwischen 6 und 13 Zeichen lang sein und darf nur Ziffern, Leerzeichen, Bindestriche oder ein '+' enthalten.")
 
 class Contact(models.Model):
-    name = models.CharField(max_length=50)
-    email = models.EmailField(validators=[validate_email_format])
-    phone = models.CharField(max_length=13, validators=[validate_phone_format])
+    name = models.CharField(max_length=50, validators=[validate_username_format])
+    email = models.EmailField(
+        max_length=254,
+        error_messages={
+            "email": "Enter a valid email address"
+        }
+    )
+    phone = models.CharField(
+        max_length=13,
+        validators=[validate_phone_format],
+    )
     emblem = models.CharField(max_length=100)
     color = models.CharField(max_length=100)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='contacts')
 
     def clean(self):
-        """
-        Überprüft, ob die E-Mail bereits in der Kontaktliste des Benutzers existiert.
-        """
+
         if Contact.objects.filter(user=self.user, email=self.email).exclude(id=self.id).exists():
-            raise ValidationError("Diese E-Mail existiert bereits in Ihrer Kontaktliste.")
+            raise ValidationError("email already exists.")
 
     def save(self, *args, **kwargs):
-        self.clean()
+        self.full_clean()
         super().save(*args, **kwargs)
     
     def __str__(self):

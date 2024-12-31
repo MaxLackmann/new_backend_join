@@ -19,6 +19,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='customuser',
             name='username',
-            field=models.CharField(help_text='150 Zeichen oder weniger. Buchstaben, Zahlen, Leerzeichen und @/./+/-/_ erlaubt.', max_length=150, unique=True, validators=[user_auth_app.models.validate_username]),
+            field=models.CharField(help_text='150 Zeichen oder weniger. Buchstaben, Zahlen, Leerzeichen und @/./+/-/_ erlaubt.', max_length=150, unique=True, validators=[user_auth_app.models.validate_username_format]),
         ),
     ]

@@ -30,6 +30,7 @@ class CurrentUser(generics.RetrieveUpdateDestroyAPIView):
     
 class RegisterView(APIView):
     permission_classes = (AllowAny,)
+
     def post(self, request):
         print("Request received with data:", request.data)
         serializer = UserRegisterSerializer(data=request.data)
@@ -37,10 +38,10 @@ class RegisterView(APIView):
         if serializer.is_valid():
             serializer.save()
             data = serializer.data
+            return Response(data, status=status.HTTP_201_CREATED)
         else:
             print("Registration errors:", serializer.errors)
-            data = serializer.errors
-        return Response(data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class EmailLoginView(APIView):
     permission_classes = [AllowAny]
@@ -50,17 +51,13 @@ class EmailLoginView(APIView):
         serializer = EmailAuthTokenSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.validated_data['user']
-            print("User authenticated:", user)
 
             if not user.is_active:
-                return Response({"error": "User account is inactive."}, status=status.HTTP_403_FORBIDDEN)
+                return Response({"detail": "User account is inactive."}, status=status.HTTP_403_FORBIDDEN)
 
-            # 🟢 Aktualisiere die letzte Aktivität beim Login
             user.last_activity = now()
             user.save(update_fields=['last_activity'])
-            print(f"Last activity updated for user: {user.email}")
 
-            # Lösche bestehende Tokens und erstelle einen neuen Token
             Token.objects.filter(user=user).delete()
             token = Token.objects.create(user=user)
 
@@ -71,14 +68,13 @@ class EmailLoginView(APIView):
             return Response(data, status=status.HTTP_200_OK)
         
         print("Validation errors:", serializer.errors)
-        return Response(serializer.errors, status=400)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
 class GuestLoginView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        # Lösche inaktive Gäste vor der Erstellung eines neuen Gastes
         guest_threshold_time = now() - timedelta(minutes=1)
         inactive_guests = CustomUser.objects.filter(
             is_guest=True,
@@ -86,9 +82,8 @@ class GuestLoginView(APIView):
         )
         if inactive_guests.exists():
             inactive_guests.delete()
-            print("[GuestLoginView] Inaktive Gäste gelöscht.")
+            print("[GuestLoginView] Inactive guests deleted.")
 
-        # Erstelle einen neuen Gast
         guest_username = f"guest_{uuid.uuid4().hex[:3]}"
         guest_email = f"{guest_username}@guest.com"
 
@@ -101,7 +96,7 @@ class GuestLoginView(APIView):
             emblem="G",
             color="#cccccc"
         )
-        guest_user.last_activity = now()  # Setze initiale Aktivität
+        guest_user.last_activity = now()
         guest_user.save()
 
         token, _ = Token.objects.get_or_create(user=guest_user)
@@ -123,9 +118,9 @@ class GuestLogoutView(APIView):
 
         if hasattr(user, 'is_guest') and user.is_guest:
             user.delete()
-            return Response({"message": "Gastbenutzer und Daten erfolgreich gelöscht."}, status=status.HTTP_200_OK)
+            return Response({"message": "GuestUser and Dates successfully deleted."}, status=status.HTTP_200_OK)
         else:
-            return Response({"error": "Kein Gastbenutzer erkannt oder nicht authentifiziert."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "No GuestUser found or authentication failed."}, status=status.HTTP_400_BAD_REQUEST)
         
 class ActivityPingView(APIView):
     permission_classes = [IsAuthenticated]

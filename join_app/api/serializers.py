@@ -5,8 +5,6 @@ from user_auth_app.api.serializers import CustomUserSerializer
 import re
 
 class ContactSerializer(serializers.ModelSerializer):
-    phone = serializers.CharField(required=False)
-
     class Meta:
         model = Contact
         fields = ('id', 'name', 'email', 'phone', 'emblem', 'color')
@@ -14,27 +12,26 @@ class ContactSerializer(serializers.ModelSerializer):
 
     def validate_email(self, value):
         """
-        Stellt sicher, dass die E-Mail eine gültige Struktur und TLD besitzt.
+        Validiert die E-Mail eines Kontakts:
+        - Sie darf nicht die gleiche E-Mail wie die des aktuellen Benutzers sein.
+        - Sie darf nicht bereits einem anderen Kontakt desselben Benutzers gehören.
+        - Sie darf nicht bereits einem anderen Benutzer gehören.
         """
-        email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-        if not re.match(email_regex, value):
-            raise serializers.ValidationError("Die E-Mail-Adresse muss eine gültige Top-Level-Domain (z.B. .de, .com, .net) haben.")
-        
         user = self.context['request'].user
         contact_id = self.instance.id if self.instance else None
-        
+
+        # 🔹 1. E-Mail darf nicht die des Benutzers sein
+        if user.email == value:
+            raise serializers.ValidationError("E-Mail cannot be the same as the user's E-Mail.")
+
+        # 🔹 2. E-Mail darf nicht einem anderen Kontakt des Benutzers gehören
         if Contact.objects.filter(user=user, email=value).exclude(id=contact_id).exists():
-            raise serializers.ValidationError("Diese E-Mail existiert bereits in Ihrer Kontaktliste.")
-        
-        return value
-    
-    def validate_phone(self, value):
-        """
-        Validiert das Format der Telefonnummer.
-        """
-        phone_regex = r'^\+?[0-9\s\-]{6,13}$'
-        if not re.match(phone_regex, value):
-            raise serializers.ValidationError("Die Telefonnummer muss zwischen 6 und 13 Zeichen lang sein und darf nur Ziffern, Leerzeichen, Bindestriche oder ein '+' enthalten.")
+            raise serializers.ValidationError("This email is already associated with another contact of yours.")
+
+        # 🔹 3. E-Mail darf nicht einem anderen Benutzer gehören
+        if CustomUser.objects.filter(email=value).exists():
+            raise serializers.ValidationError("This email is already associated with a user account.")
+
         return value
 
     def create(self, validated_data):

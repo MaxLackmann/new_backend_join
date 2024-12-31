@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from .serializers import ContactSerializer, TaskSerializer, SubtaskSerializer
 from ..models import Contact, Task, Subtask
+from rest_framework.exceptions import ValidationError
 
 class ContactList(generics.ListCreateAPIView):
     serializer_class = ContactSerializer
@@ -13,7 +14,11 @@ class ContactList(generics.ListCreateAPIView):
         return Contact.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        try:
+            serializer.save(user=self.request.user)
+        except ValidationError as e:
+            print("Validation Error Details:", e.detail)
+            raise Response(e.detail, status=status.HTTP_400_BAD_REQUEST)
 
 class ContactDetail(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ContactSerializer

@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from user_auth_app.models import CustomUser
 from django.contrib.auth import authenticate
+from rest_framework.exceptions import AuthenticationFailed
 
 class UserRegisterSerializer(serializers.ModelSerializer):
     confirm_password = serializers.CharField(write_only=True)
@@ -13,8 +14,24 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         if data['password'] != data['confirm_password']:
-            raise serializers.ValidationError({'password': 'Passwords do not match.'})
+            raise AuthenticationFailed('Passwords do not match.')
         return data
+    
+    def validate_email(self, value):
+        """
+        Überprüft, ob die E-Mail bereits verwendet wird.
+        """
+        if CustomUser.objects.filter(email=value).exists():
+            raise serializers.ValidationError("This email is already in use. Please use a different email.")
+        return value
+
+    def validate_username(self, value):
+        """
+        Überprüft, ob der Benutzername bereits verwendet wird.
+        """
+        if CustomUser.objects.filter(username=value).exists():
+            raise serializers.ValidationError("This username is already taken. Please choose another one.")
+        return value
     
     def create(self, validated_data):
         validated_data.pop('confirm_password')
@@ -33,18 +50,18 @@ class EmailAuthTokenSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True)
 
     def validate(self, attrs):
-        email = attrs.get('email').lower()
-        password = attrs.get('password')
+        email = attrs.get('email', '').lower()
+        password = attrs.get('password', '')
 
-        print(f"Validating email: {email}, password: {password}")
+        if not email or not password:
+            raise AuthenticationFailed("Must include 'email' and 'password'.")
 
-        if email and password:
-            user = authenticate(username=email, password=password)
-            print("Authenticated user:", user) 
-            if not user:
-                raise serializers.ValidationError("Unable to log in with provided credentials.")
-        else:
-            raise serializers.ValidationError("Must include 'email' and 'password'.")
+        user = authenticate(username=email, password=password)
+        if not user:
+            raise AuthenticationFailed("Invalid email or password.")
+
+        if not user.is_active:
+            raise AuthenticationFailed("This account is inactive.")
 
         attrs['user'] = user
         return attrs
